@@ -261,8 +261,13 @@ class AdminAdListView(LoginRequiredMixin, UserPassesTestMixin, ListView): # Chan
         """
         queryset = Ad.objects.all().order_by('-created_at')
         status = self.request.GET.get('status')
-        if status in [Ad.STATUS_PENDING, Ad.STATUS_APPROVED, Ad.STATUS_DENIED]:
+
+        # Default to pending if no valid status is provided
+        if status in [Ad.STATUS_APPROVED, Ad.STATUS_DENIED]:
             queryset = queryset.filter(status=status)
+        else: # Default to pending if status is empty, 'pending', or invalid
+            queryset = queryset.filter(status=Ad.STATUS_PENDING)
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -270,7 +275,13 @@ class AdminAdListView(LoginRequiredMixin, UserPassesTestMixin, ListView): # Chan
         Add status filter and status constants to context.
         """
         context = super().get_context_data(**kwargs)
-        context['status_filter'] = self.request.GET.get('status', '')
+        status = self.request.GET.get('status')
+        # Default status_filter context for button highlighting
+        if status in [Ad.STATUS_APPROVED, Ad.STATUS_DENIED]:
+            context['status_filter'] = status
+        else: # Default to pending if status is empty, 'pending', or invalid
+            context['status_filter'] = Ad.STATUS_PENDING
+
         context['pending_count'] = Ad.objects.filter(status=Ad.STATUS_PENDING).count()
         # Add status constants to context for use in template links
         context['STATUS_PENDING'] = Ad.STATUS_PENDING

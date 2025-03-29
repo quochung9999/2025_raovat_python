@@ -26,9 +26,13 @@
                         <li class="nav-item">
                             <span class="nav-link">Hi {{ user.username }}!</span>
                         </li>
-                        {% if user.is_superuser %}
+                        {% if user.is_superuser or user.is_moderator %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'ads_management' %}">Manage</a> {# Updated link and text #}
+                            {% if user.is_superuser %}
+                                <a class="nav-link" href="{% url 'ads_management' %}">Manage Site</a> {# Superuser Dashboard #}
+                            {% else %} {# Must be moderator #}
+                                <a class="nav-link" href="{% url 'admin_ad_list' %}">Manage Ads</a> {# Moderator Ad List #}
+                            {% endif %}
                         </li>
                         {% endif %}
                         <li class="nav-item">

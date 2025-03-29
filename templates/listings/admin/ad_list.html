@@ -6,12 +6,12 @@
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap"> {# Added flex-wrap for smaller screens #}
         <h1>Manage Ads</h1>
-        <a href="{% url 'ads_management' %}" class="btn btn-outline-secondary btn-sm">Back to Management</a> {# Moved button up #}
+        <a href="{% if user.is_superuser %}{% url 'ads_management' %}{% else %}{% url 'home' %}{% endif %}" class="btn btn-outline-secondary btn-sm">{% if user.is_superuser %}Back to Management{% else %}Back to Home{% endif %}</a>
     </div>
 
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'ads_management' %}">Ads Management</a></li>
+            <li class="breadcrumb-item"><a href="{% if user.is_superuser %}{% url 'ads_management' %}{% else %}{% url 'home' %}{% endif %}">{% if user.is_superuser %}Ads Management{% else %}Home{% endif %}</a></li>
             <li class="breadcrumb-item active" aria-current="page">Advertisements</li>
         </ol>
     </nav>
@@ -73,15 +73,19 @@
                             {% endif %} {# End superuser check #}
                         </div>
                     </div>
+                    {# Toggle All Button - Moved inside row, removed w-100 #}
+                    <div class="col-12 col-md-auto mt-2 mt-md-0">
+                        <button type="button" id="toggle-all-details" class="btn btn-sm btn-secondary">Collapse All Ads</button>
+                    </div>
                     <div class="col-12 col-md-auto d-none d-md-block"> {# Select All only for table view #}
                          <div class="form-check">
                              <input type="checkbox" id="select-all-table" class="form-check-input ad-select-all">
                              <label for="select-all-table" class="form-check-label">Select All</label>
                          </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </div> {# End .row #}
+            </div> {# End .card-body #}
+        </div> {# End .card #}
 
         <!-- Ad Listing - Table for Medium+ Screens -->
         <div class="card d-none d-md-block mb-3"> {# Hide on small screens #}
@@ -102,8 +106,14 @@
                             </thead>
                             <tbody>
                                 {% for ad in ads %}
-                                    <tr class="{% if ad.status == ad.STATUS_PENDING %}table-warning{% elif ad.status == ad.STATUS_DENIED %}table-danger{% endif %}">
-                                        <td><input type="checkbox" name="selected_ads" value="{{ ad.id }}" class="form-check-input ad-checkbox"></td>
+                                    {# Main Row - Clickable to toggle details #}
+                                    <tr class="ad-row-main {% if ad.status == ad.STATUS_PENDING %}table-warning{% elif ad.status == ad.STATUS_DENIED %}table-danger{% endif %}"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#details-{{ ad.pk }}"
+                                        aria-expanded="true" {# Start expanded #}
+                                        aria-controls="details-{{ ad.pk }}"
+                                        style="cursor: pointer;">
+                                        <td><input type="checkbox" name="selected_ads" value="{{ ad.id }}" class="form-check-input ad-checkbox" onclick="event.stopPropagation();"></td> {# Stop propagation on checkbox click #}
                                         <td>{{ ad.title }}</td>
                                         <td>
                                             {{ ad.category.name }}
@@ -114,12 +124,25 @@
                                             {% include "listings/partials/status_badge.html" with status=ad.status %} {# Use partial #}
                                         </td>
                                         <td>{{ ad.created_at|date:"M d, Y" }}</td>
-                                        <td>
+                                        <td onclick="event.stopPropagation();"> {# Stop propagation on actions cell click #}
                                             <a href="{% url 'ad_detail' ad.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye-fill"></i></a>
                                             {% if ad.status == ad.STATUS_PENDING %}
                                                 <button type="button" class="btn btn-sm btn-success approve-btn" data-ad-id="{{ ad.id }}" title="Approve"><i class="bi bi-check-lg"></i></button>
                                                 <button type="button" class="btn btn-sm btn-danger deny-btn" data-ad-id="{{ ad.id }}" title="Deny"><i class="bi bi-x-lg"></i></button>
                                             {% endif %}
+                                        </td>
+                                    </tr>
+                                    {# Details Row - Collapsible #}
+                                    <tr class="ad-row-details collapse show ad-details-collapse" id="details-{{ ad.pk }}">
+                                        <td colspan="7" class="p-3"> {# Span all columns, add padding #}
+                                            <h6 class="text-success">
+                                                {% if ad.price_type == ad.PRICE_TYPE_FIXED %}Price: ${{ ad.price|floatformat:2 }}{% endif %}
+                                                {% if ad.price_type == ad.PRICE_TYPE_PER_HOUR %}Rate: ${{ ad.price|floatformat:2 }} / hour{% endif %}
+                                                {% if ad.price_type == ad.PRICE_TYPE_NEGOTIABLE %}Price: Negotiable{% endif %}
+                                                {% if ad.price_type == ad.PRICE_TYPE_FREE %}Price: Free{% endif %}
+                                            </h6>
+                                            {% if ad.location %}<p class="mb-1"><small><strong>Location:</strong> {{ ad.location }}</small></p>{% endif %}
+                                            <p class="mb-0"><small>{{ ad.description|linebreaksbr }}</small></p>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -142,8 +165,16 @@
             <div class="card mb-3 {% if ad.status == ad.STATUS_PENDING %}border-warning{% elif ad.status == ad.STATUS_DENIED %}border-danger{% endif %}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="card-title mb-1">{{ ad.title }}</h5>
-                        <input type="checkbox" name="selected_ads" value="{{ ad.id }}" class="form-check-input ad-checkbox ms-2">
+                        {# Make title clickable to toggle details #}
+                        <h5 class="card-title mb-1"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#details-card-{{ ad.pk }}"
+                            aria-expanded="true" {# Start expanded #}
+                            aria-controls="details-card-{{ ad.pk }}"
+                            style="cursor: pointer;">
+                            {{ ad.title }}
+                        </h5>
+                        <input type="checkbox" name="selected_ads" value="{{ ad.id }}" class="form-check-input ad-checkbox ms-2" onclick="event.stopPropagation();"> {# Stop propagation #}
                     </div>
                     <small class="d-block text-muted mb-2">
                         By: {{ ad.author.username }} | {{ ad.created_at|date:"M d, Y" }}
@@ -154,7 +185,22 @@
                     <div class="mb-2">
                          {% include "listings/partials/status_badge.html" with status=ad.status %} {# Use partial #}
                     </div>
-                    <div class="d-flex justify-content-end gap-2">
+
+                    {# Collapsible Details Section #}
+                    <div class="collapse show ad-details-collapse" id="details-card-{{ ad.pk }}">
+                        <hr>
+                        <h6 class="text-success small">
+                            {% if ad.price_type == ad.PRICE_TYPE_FIXED %}Price: ${{ ad.price|floatformat:2 }}{% endif %}
+                            {% if ad.price_type == ad.PRICE_TYPE_PER_HOUR %}Rate: ${{ ad.price|floatformat:2 }} / hour{% endif %}
+                            {% if ad.price_type == ad.PRICE_TYPE_NEGOTIABLE %}Price: Negotiable{% endif %}
+                            {% if ad.price_type == ad.PRICE_TYPE_FREE %}Price: Free{% endif %}
+                        </h6>
+                        {% if ad.location %}<p class="mb-1"><small><strong>Location:</strong> {{ ad.location }}</small></p>{% endif %}
+                        <p class="mb-2"><small>{{ ad.description|truncatewords:30|linebreaksbr }}</small></p> {# Truncate description slightly for card view #}
+                    </div>
+
+                    {# Action Buttons #}
+                    <div class="d-flex justify-content-end gap-2 mt-2">
                          <a href="{% url 'ad_detail' ad.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye-fill"></i> View</a>
                          {% if ad.status == ad.STATUS_PENDING %}
                              <button type="button" class="btn btn-sm btn-success approve-btn" data-ad-id="{{ ad.id }}" title="Approve"><i class="bi bi-check-lg"></i> Approve</button>
@@ -300,6 +346,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial check for select-all status on page load
     const allCheckedInitially = Array.from(allCheckboxes).length > 0 && Array.from(allCheckboxes).every(cb => cb.checked);
     selectAllTriggers.forEach(trigger => trigger.checked = allCheckedInitially);
+
+    // --- Toggle All Details ---
+    const toggleAllButton = document.getElementById('toggle-all-details');
+    const allDetailSections = document.querySelectorAll('.ad-details-collapse');
+    // Get Bootstrap Collapse instances for each section
+    const collapseInstances = Array.from(allDetailSections).map(el => new bootstrap.Collapse(el, { toggle: false })); // Initialize without toggling
+
+    if (toggleAllButton) {
+        toggleAllButton.addEventListener('click', function() {
+            // Check if currently any section is collapsed (not shown)
+            const isAnyCollapsed = Array.from(allDetailSections).some(el => !el.classList.contains('show'));
+
+            if (isAnyCollapsed) {
+                // If any are collapsed, expand all
+                collapseInstances.forEach(instance => instance.show());
+                this.textContent = 'Collapse All Ads'; // Corrected Text
+            } else {
+                // If all are expanded, collapse all
+                collapseInstances.forEach(instance => instance.hide());
+                this.textContent = 'Expand All Ads'; // Corrected Text
+            }
+        });
+
+        // Optional: Set initial button text based on initial state (all start expanded)
+        // Since they start expanded, the button should initially say "Collapse All"
+        // This is already set in the HTML, but could be done dynamically:
+        // const isAllExpandedInitially = Array.from(allDetailSections).every(el => el.classList.contains('show'));
+        // toggleAllButton.textContent = isAllExpandedInitially ? 'Collapse All' : 'Expand All';
+    }
+
+    // Ensure individual toggles update the Toggle All button text (optional but good UX)
+    allDetailSections.forEach(section => {
+        section.addEventListener('hidden.bs.collapse', () => {
+            // If any section becomes hidden, button should say "Expand All Ads"
+            if (toggleAllButton) toggleAllButton.textContent = 'Expand All Ads'; // Corrected Text
+        });
+        section.addEventListener('shown.bs.collapse', () => {
+            // If a section is shown, check if ALL are now shown
+            const isAllExpanded = Array.from(allDetailSections).every(el => el.classList.contains('show'));
+            if (isAllExpanded && toggleAllButton) {
+                toggleAllButton.textContent = 'Collapse All Ads'; // Corrected Text
+            }
+        });
+    });
 
 });
 </script>

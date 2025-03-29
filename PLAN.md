@@ -26,6 +26,7 @@ This application provides a platform for users to post and browse classified adv
     *   Comprehensive ad management: View all ads, approve or deny pending ads (individually by Mods/Admins, bulk by Admins).
     *   User management: View users, ban/unban, assign/remove Moderator role (Superuser only).
     *   **Flag Review:** Admins can review user flags submitted by moderators and ban users accordingly (Superuser only).
+
 *   **Deployment Configuration:**
     *   Configured to be accessible over the network via `0.0.0.0:8000`.
     *   Firewall rules updated to allow traffic on port 8000.
