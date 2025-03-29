@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Categories{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap"> {# Added flex-wrap #}
+        <h1>Manage Categories</h1>
+        <div class="d-flex gap-2 flex-wrap"> {# Wrap buttons #}
+            <a href="{% url 'category_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle-fill me-1"></i>Add New Category</a>
+            <a href="{% url 'ads_management' %}" class="btn btn-outline-secondary btn-sm">Back to Management</a>
+        </div>
+    </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'ads_management' %}">Ads Management</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Categories</li>
+        </ol>
+    </nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if not categories %}
+         <div class="alert alert-info text-center">
+             No categories found. <a href="{% url 'category_create' %}" class="alert-link">Create your first category</a>.
+         </div>
+    {% else %}
+        <!-- Category Listing - Table for Medium+ Screens -->
+        <div class="card d-none d-md-block mb-3"> {# Hide on small screens #}
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Slug</th>
+                                <th>Subcategories</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in categories %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>{{ category.slug }}</td>
+                                    <td>{{ category.subcategories.count }}</td>
+                                    <td>
+                                        <a href="{% url 'category_update' category.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                                        <a href="{% url 'category_delete' category.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash-fill"></i></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Listing - Cards for Small Screens -->
+        <div class="d-block d-md-none"> {# Show only on small screens #}
+            {% for category in categories %}
+            <div class="card mb-3">
+                <div class="card-body">
+                     <div class="d-flex justify-content-between align-items-start mb-2">
+                         <h5 class="card-title mb-0">{{ category.name }}</h5>
+                         <div class="d-flex gap-1">
+                             <a href="{% url 'category_update' category.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                             <a href="{% url 'category_delete' category.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash-fill"></i></a>
+                         </div>
+                     </div>
+                     <p class="card-text mb-1"><small><strong>Slug:</strong> {{ category.slug }}</small></p>
+                     <p class="card-text mb-0"><small><strong>Subcategories:</strong> {{ category.subcategories.count }}</small></p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %} {# End if categories exist #}
+
+</div>
+{% endblock content %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Review User Flags{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h1>Review User Flags</h1>
+        <a href="{% url 'ads_management' %}" class="btn btn-outline-secondary btn-sm">Back to Management</a>
+    </div>
+    <p class="lead">Review users flagged by moderators and take action if necessary.</p>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'ads_management' %}">Ads Management</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Flagged Users</li>
+        </ol>
+    </nav>
+    <hr>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if not flags %}
+         <div class="alert alert-info text-center">
+             There are currently no pending user flags to review.
+         </div>
+    {% else %}
+        <form method="post" id="flag-review-form">
+            {% csrf_token %}
+            <!-- Bulk Actions -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-auto">
+                             <h5 class="card-title mb-0">Bulk Actions</h5>
+                        </div>
+                         <div class="col-md">
+                            <div class="d-grid gap-2 d-md-block">
+                                <button type="submit" name="action" value="ban_selected" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to ban users associated with the selected flags?')">
+                                    <i class="bi bi-slash-circle-fill"></i> Ban Selected
+                                </button>
+                                <button type="submit" name="action" value="ban_all_pending" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to ban ALL users associated with pending flags?')">
+                                    <i class="bi bi-slash-circle-fill"></i> Ban All Pending
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-auto d-none d-md-block">
+                             <div class="form-check">
+                                 <input type="checkbox" id="select-all-table" class="form-check-input flag-select-all">
+                                 <label for="select-all-table" class="form-check-label">Select All</label>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flag Listing - Table for Medium+ Screens -->
+            <div class="card d-none d-md-block mb-3">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 1%;"><input type="checkbox" id="select-all-proxy-table" class="form-check-input flag-select-all"></th>
+                                    <th>Flagged User</th>
+                                    <th>Reason</th>
+                                    <th>Details</th>
+                                    <th>Flagged By</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for flag in flags %}
+                                    <tr>
+                                        <td><input type="checkbox" name="selected_flags" value="{{ flag.pk }}" class="form-check-input flag-checkbox"></td>
+                                        <td>{{ flag.flagged_user.username }}</td>
+                                        <td>{{ flag.get_reason_display }}</td>
+                                        <td>{{ flag.details|default:"N/A"|truncatechars:50 }}</td>
+                                        <td>{{ flag.moderator.username|default:"N/A" }}</td>
+                                        <td>{{ flag.created_at|date:"M d, Y P" }}</td>
+                                        <td>
+                                            {# Direct ban button for single user #}
+                                            <button type="button" class="btn btn-sm btn-danger ban-single-btn" data-flag-id="{{ flag.pk }}" title="Ban {{ flag.flagged_user.username }}"
+                                                    onclick="return confirm('Are you sure you want to ban user {{ flag.flagged_user.username }} based on this flag?')">
+                                                <i class="bi bi-slash-circle-fill"></i> Ban User
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flag Listing - Cards for Small Screens -->
+            <div class="d-block d-md-none">
+                 <div class="mb-2">
+                     <input type="checkbox" id="select-all-cards" class="form-check-input flag-select-all">
+                     <label for="select-all-cards" class="form-check-label">Select All</label>
+                 </div>
+                {% for flag in flags %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                         <div class="d-flex justify-content-between align-items-start mb-2">
+                             <div>
+                                 <h5 class="card-title mb-0">User: {{ flag.flagged_user.username }}</h5>
+                                 <small class="text-muted">By: {{ flag.moderator.username|default:"N/A" }} | {{ flag.created_at|date:"M d, Y" }}</small>
+                             </div>
+                             <input type="checkbox" name="selected_flags" value="{{ flag.pk }}" class="form-check-input flag-checkbox ms-2">
+                         </div>
+                         <p class="card-text mb-1"><strong>Reason:</strong> {{ flag.get_reason_display }}</p>
+                         {% if flag.details %}
+                             <p class="card-text mb-2"><small><strong>Details:</strong> {{ flag.details|truncatewords:20 }}</small></p>
+                         {% endif %}
+                         <div class="d-flex justify-content-end">
+                              <button type="button" class="btn btn-sm btn-danger ban-single-btn" data-flag-id="{{ flag.pk }}" title="Ban {{ flag.flagged_user.username }}"
+                                      onclick="return confirm('Are you sure you want to ban user {{ flag.flagged_user.username }} based on this flag?')">
+                                  <i class="bi bi-slash-circle-fill"></i> Ban User
+                              </button>
+                         </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </form> {# End Form #}
+
+        <!-- Pagination -->
+        {% include "listings/partials/pagination.html" %} {# Assuming pagination partial exists #}
+
+    {% endif %} {# End if flags exist #}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const flagReviewForm = document.getElementById('flag-review-form');
+    if (!flagReviewForm) return; // Exit if form not found
+
+    // --- Checkbox Synchronization ---
+    const allCheckboxes = flagReviewForm.querySelectorAll('.flag-checkbox');
+    const selectAllTriggers = flagReviewForm.querySelectorAll('.flag-select-all');
+
+    selectAllTriggers.forEach(trigger => {
+        trigger.addEventListener('change', function() {
+            const isChecked = this.checked;
+            allCheckboxes.forEach(checkbox => checkbox.checked = isChecked);
+            selectAllTriggers.forEach(otherTrigger => {
+                if (otherTrigger !== this) otherTrigger.checked = isChecked;
+            });
+        });
+    });
+
+    allCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(allCheckboxes).length > 0 && Array.from(allCheckboxes).every(cb => cb.checked);
+            selectAllTriggers.forEach(trigger => trigger.checked = allChecked);
+        });
+    });
+
+    // --- Single Ban Button ---
+     flagReviewForm.addEventListener('click', function(event) {
+        const button = event.target.closest('.ban-single-btn');
+        if (button) {
+            event.preventDefault(); // Prevent default if it's somehow submitting
+
+            const flagId = button.getAttribute('data-flag-id');
+            if (!flagId) return;
+
+            // Uncheck all checkboxes
+            allCheckboxes.forEach(cb => cb.checked = false);
+
+            // Check the specific checkbox for this flag
+            const checkbox = flagReviewForm.querySelector(`.flag-checkbox[value="${flagId}"]`);
+            if (checkbox) checkbox.checked = true;
+
+            // Create hidden input for 'ban_selected' action and submit
+            const existingActionInput = flagReviewForm.querySelector('input[name="action"][type="hidden"]');
+            if (existingActionInput) existingActionInput.remove();
+
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'ban_selected'; // Use the same action as bulk select
+            flagReviewForm.appendChild(actionInput);
+
+            flagReviewForm.submit();
+        }
+    });
+
+    // Initial check for select-all status
+    const allCheckedInitially = Array.from(allCheckboxes).length > 0 && Array.from(allCheckboxes).every(cb => cb.checked);
+    selectAllTriggers.forEach(trigger => trigger.checked = allCheckedInitially);
+});
+</script>
+{% endblock extra_js %}

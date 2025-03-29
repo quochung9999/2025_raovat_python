@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ad.title }}{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        {% comment %}
+        {% if ad.image %}
+            <img src="{{ ad.image.url }}" class="card-img-top" alt="{{ ad.title }}">
+        {% endif %}
+        {% endcomment %}
+        <div class="card-body">
+            <h1 class="card-title">{{ ad.title }}</h1>
+            <h6 class="card-subtitle mb-2 text-muted">
+                Category: {{ ad.category.name }} {% if ad.subcategory %}> {{ ad.subcategory.name }}{% endif %}
+            </h6>
+            {% comment %} Price Display Logic {% endcomment %}
+            <h5 class="text-success mb-3">
+                {% if ad.price_type == ad.PRICE_TYPE_FIXED %}
+                    Price: ${{ ad.price|floatformat:2 }}
+                {% elif ad.price_type == ad.PRICE_TYPE_PER_HOUR %}
+                    Rate: ${{ ad.price|floatformat:2 }} / hour
+                {% elif ad.price_type == ad.PRICE_TYPE_NEGOTIABLE %}
+                    Price: Negotiable
+                {% elif ad.price_type == ad.PRICE_TYPE_FREE %}
+                    Price: Free
+                {% else %}
+                    {# Fallback or handle unexpected price_type #}
+                    Price: Contact poster
+                {% endif %}
+            </h5>
+            {% if ad.location %}
+                <p class="card-text"><small class="text-muted">Location: {{ ad.location }}</small></p>
+            {% endif %}
+
+            <hr>
+            <p class="card-text">{{ ad.description|linebreaksbr }}</p> {# Use linebreaksbr to respect newlines #}
+            <hr>
+
+            <p class="card-text">
+                <small class="text-muted">
+                    Posted by: {{ ad.author.username }} on {{ ad.created_at|date:"F j, Y, P" }}
+                    {% if ad.created_at != ad.updated_at %}
+                        (Last updated: {{ ad.updated_at|timesince }} ago)
+                    {% endif %}
+                </small>
+                {# Moderator Flag Button #}
+                {% if request.user.is_authenticated and request.user.is_moderator and request.user != ad.author %}
+                    <a href="{% url 'flag_user' user_id=ad.author.pk %}" class="btn btn-sm btn-outline-warning ms-2" title="Flag this user for review"><i class="bi bi-flag-fill"></i> Flag User</a>
+                {% endif %}
+            </p>
+
+            {% comment %}
+            Optional: Add edit/delete buttons if user is author or admin
+            {% if user == ad.author or user.is_superuser %}
+                <a href="#" class="btn btn-secondary btn-sm">Edit</a>
+                <a href="#" class="btn btn-danger btn-sm">Delete</a>
+            {% endif %}
+            {% endcomment %}
+
+        </div>
+    </div>
+
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary mt-3">Back to Listings</a>
+</div>
+{% endblock content %}

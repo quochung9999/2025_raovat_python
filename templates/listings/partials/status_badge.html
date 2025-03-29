@@ -1,0 +1,10 @@
+{% comment %} Expects 'status' variable in context {% endcomment %}
+{% if status == 'pending' %}
+    <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>Pending</span>
+{% elif status == 'approved' %}
+    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
+{% elif status == 'denied' %}
+    <span class="badge bg-danger"><i class="bi bi-x-octagon-fill me-1"></i>Denied</span>
+{% else %}
+     <span class="badge bg-secondary">{{ status|default:'Unknown' }}</span>
+{% endif %}

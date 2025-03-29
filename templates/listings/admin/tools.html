@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Ads Management{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Ads Management</h1>
+    <p class="lead">Welcome to the ads management dashboard. From here, you can manage ads, categories, and subcategories.</p>
+    <hr>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4"> {# Adjusted cols for better spacing on medium #}
+        <!-- Ad Management Card -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-megaphone-fill me-2"></i>Ad Management</h5> {# Added icon #}
+                    <p class="card-text">Review, approve, or deny advertisements.</p>
+                    {% if pending_ads_count > 0 %}
+                        <div class="alert alert-warning d-flex align-items-center">
+                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                             <div><strong>{{ pending_ads_count }}</strong> ad(s) pending approval</div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success d-flex align-items-center">
+                             <i class="bi bi-check-circle-fill me-2"></i>
+                             <div>No ads pending approval</div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent border-top-0"> {# Removed bg for cleaner look #}
+                    <div class="d-grid"> {# Make button full width #}
+                        <a href="{% url 'admin_ad_list' %}" class="btn btn-primary">Manage Ads</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Management Card -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-tags-fill me-2"></i>Category Management</h5> {# Added icon #}
+                    <p class="card-text">Create, edit, or delete ad categories.</p>
+                    <p>Currently <strong>{{ categories_count }}</strong> categories</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="d-grid"> {# Make button full width #}
+                        <a href="{% url 'category_list' %}" class="btn btn-primary">Manage Categories</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subcategory Management Card -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-tag-fill me-2"></i>Subcategory Management</h5> {# Added icon #}
+                    <p class="card-text">Create, edit, or delete ad subcategories.</p>
+                    <p>Currently <strong>{{ subcategories_count }}</strong> subcategories</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="d-grid"> {# Make button full width #}
+                        <a href="{% url 'subcategory_list' %}" class="btn btn-primary">Manage Subcategories</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Card -->
+         <div class="col">
+             <div class="card h-100">
+                 <div class="card-body">
+                     <h5 class="card-title"><i class="bi bi-people-fill me-2"></i>User Management</h5> {# Added icon #}
+                     <p class="card-text">View users and manage their account status (ban/unban).</p>
+                     {# Optionally add user count here if needed later #}
+                 </div>
+                 <div class="card-footer bg-transparent border-top-0">
+                     <div class="d-grid"> {# Make button full width #}
+                         <a href="{% url 'user_management_list' %}" class="btn btn-primary">Manage Users</a>
+                     </div>
+                 </div>
+             </div>
+          </div>
+
+         <!-- Flag Review Card -->
+         <div class="col">
+             <div class="card h-100">
+                 <div class="card-body">
+                     <h5 class="card-title"><i class="bi bi-flag-fill me-2"></i>Flag Review</h5> {# Added icon #}
+                     <p class="card-text">Review users flagged by moderators.</p>
+                     {% if pending_flags_count > 0 %}
+                         <div class="alert alert-danger d-flex align-items-center">
+                              <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                              <div><strong>{{ pending_flags_count }}</strong> user flag(s) pending review</div>
+                         </div>
+                     {% else %}
+                         <div class="alert alert-secondary d-flex align-items-center">
+                              <i class="bi bi-check2-all me-2"></i>
+                              <div>No pending user flags</div>
+                         </div>
+                     {% endif %}
+                 </div>
+                 <div class="card-footer bg-transparent border-top-0">
+                     <div class="d-grid"> {# Make button full width #}
+                         <a href="{% url 'flagged_user_list' %}" class="btn btn-warning">Review Flags</a>
+                     </div>
+                 </div>
+             </div>
+         </div>
+
+     </div> {# End of row for cards #}
+
+     <!-- Quick Actions -->
+     <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h5> {# Added icon #}
+        </div>
+        <div class="card-body">
+            <div class="row g-3"> {# Added gap #}
+                <div class="col-md-6">
+                    <h6>Ad Actions</h6>
+                    <div class="d-grid gap-2 d-md-block"> {# Stack buttons on mobile, inline on md+ #}
+                        <a href="{% url 'admin_ad_list' %}?status=pending" class="btn btn-outline-warning">View Pending Ads</a>
+                        <form method="post" action="{% url 'admin_ad_list' %}" class="d-inline-block"> {# Use d-inline-block for spacing #}
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve_all_pending">
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve ALL pending ads?')">
+                                Approve All Pending
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>Category Actions</h6>
+                     <div class="d-grid gap-2 d-md-block"> {# Stack buttons on mobile, inline on md+ #}
+                        <a href="{% url 'category_create' %}" class="btn btn-outline-primary">Add New Category</a>
+                        <a href="{% url 'subcategory_create' %}" class="btn btn-outline-primary">Add New Subcategory</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

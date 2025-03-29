@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Subcategories{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap"> {# Added flex-wrap #}
+        <h1>Manage Subcategories</h1>
+         <div class="d-flex gap-2 flex-wrap"> {# Wrap buttons #}
+            <a href="{% url 'subcategory_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle-fill me-1"></i>Add New Subcategory</a>
+            <a href="{% url 'ads_management' %}" class="btn btn-outline-secondary btn-sm">Back to Management</a>
+        </div>
+    </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'ads_management' %}">Ads Management</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Subcategories</li>
+        </ol>
+    </nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if not subcategories %}
+         <div class="alert alert-info text-center">
+             No subcategories found. <a href="{% url 'subcategory_create' %}" class="alert-link">Create your first subcategory</a>.
+         </div>
+    {% else %}
+        <!-- Subcategory Listing - Table for Medium+ Screens -->
+        <div class="card d-none d-md-block mb-3"> {# Hide on small screens #}
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parent Category</th>
+                                <th>Slug</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subcategory in subcategories %}
+                                <tr>
+                                    <td>{{ subcategory.name }}</td>
+                                    <td>{{ subcategory.category.name }}</td>
+                                    <td>{{ subcategory.slug }}</td>
+                                    <td>
+                                        <a href="{% url 'subcategory_update' subcategory.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                                        <a href="{% url 'subcategory_delete' subcategory.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash-fill"></i></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subcategory Listing - Cards for Small Screens -->
+        <div class="d-block d-md-none"> {# Show only on small screens #}
+            {% for subcategory in subcategories %}
+            <div class="card mb-3">
+                <div class="card-body">
+                     <div class="d-flex justify-content-between align-items-start mb-2">
+                         <div>
+                             <h5 class="card-title mb-0">{{ subcategory.name }}</h5>
+                             <small class="text-muted">Parent: {{ subcategory.category.name }}</small>
+                         </div>
+                         <div class="d-flex gap-1">
+                             <a href="{% url 'subcategory_update' subcategory.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                             <a href="{% url 'subcategory_delete' subcategory.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash-fill"></i></a>
+                         </div>
+                     </div>
+                     <p class="card-text mb-0"><small><strong>Slug:</strong> {{ subcategory.slug }}</small></p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %} {# End if subcategories exist #}
+
+    <div class="mt-3">
+        <a href="{% url 'category_list' %}" class="btn btn-outline-primary">Manage Categories</a>
+    </div>
+</div>
+{% endblock content %}

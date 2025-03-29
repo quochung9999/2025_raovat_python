@@ -1,0 +1,19 @@
+<![CDATA[{% extends 'base.html' %}
+
+{% block title %}Confirm Delete Ad{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Confirm Deletion</h2>
+    <hr>
+    <p>Are you sure you want to delete the ad titled: <strong>"{{ ad.title }}"</strong>?</p>
+    <p>This action cannot be undone.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a href="{% url 'user_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
+]]>

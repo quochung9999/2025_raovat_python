@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Homepage{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Welcome to Classifieds!</h1>
+    <p>Browse the latest listings below or use the filters to narrow your search.</p>
+    <hr>
+
+    {# Search and Filter Form #}
+    <form method="get" action="{% url 'home' %}" class="mb-4 p-3 border rounded bg-light">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="id_q" class="form-label">Keyword</label>
+                <input type="text" name="q" id="id_q" class="form-control" placeholder="Search title/description..." value="{{ current_filters.q|default:'' }}">
+            </div>
+            <div class="col-md-3">
+                <label for="id_category" class="form-label">Category</label>
+                <select name="category" id="id_category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if current_filters.category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="id_subcategory" class="form-label">Subcategory</label>
+                <select name="subcategory" id="id_subcategory" class="form-select">
+                    <option value="">All Subcategories</option>
+                    {# Options will be loaded dynamically, but also pre-populate if category is selected #}
+                    {% if current_filters.category and subcategories %}
+                        {% for subcat in subcategories %}
+                             <option value="{{ subcat.id }}" {% if current_filters.subcategory == subcat.id|stringformat:"s" %}selected{% endif %}>
+                                 {{ subcat.name }}
+                             </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-2 d-grid gap-2 d-md-flex align-items-end"> {# Use grid/flex for button layout #}
+                <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary">Reset</a> {# Reset button #}
+            </div>
+        </div>
+    </form>
+
+    {# Ad Listings #}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for ad in ad_list %}
+            <div class="col">
+                <div class="card h-100">
+                    {# Optional Image #}
+                    {# {% if ad.image %}
+                        <img src="{{ ad.image.url }}" class="card-img-top" alt="{{ ad.title }}" style="max-height: 200px; object-fit: cover;">
+                    {% endif %} #}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ ad.title }}</h5>
+                        <p class="card-text flex-grow-1">{{ ad.description|truncatewords:20 }}</p> {# Truncate description #}
+                        {# Price Display Logic #}
+                        <p class="card-text fw-bold">
+                            {% if ad.price_type == ad.PRICE_TYPE_FIXED %}
+                                <span class="text-success">${{ ad.price|floatformat:2 }}</span>
+                            {% elif ad.price_type == ad.PRICE_TYPE_PER_HOUR %}
+                                <span class="text-success">${{ ad.price|floatformat:2 }} / hour</span>
+                            {% elif ad.price_type == ad.PRICE_TYPE_NEGOTIABLE %}
+                                <span class="text-primary">Negotiable</span>
+                            {% elif ad.price_type == ad.PRICE_TYPE_FREE %}
+                                <span class="text-info">Free</span>
+                            {% endif %}
+                        </p>
+                        <a href="{{ ad.get_absolute_url }}" class="btn btn-primary mt-auto">View Details</a>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">Posted {{ ad.created_at|timesince }} ago in {{ ad.category.name }}{% if ad.subcategory %} > {{ ad.subcategory.name }}{% endif %}</small> {# Show subcategory if available #}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12"> {# Span full width if no results #}
+                <p class="text-center">No advertisements found matching your criteria.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {# Pagination Controls - Modified to include filter parameters #}
+    {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% with current_query=request.GET.urlencode %}
+                {# Previous Page Link #}
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&amp;{{ current_query|cut:'page='|cut:page_obj.previous_page_number|cut:'&amp;&amp;'|cut:'&amp; ' }}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                {# Page Number Links #}
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                        <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                    {% else %}
+                        <li class="page-item">
+                             <a class="page-link" href="?page={{ i }}&amp;{{ current_query|cut:'page='|cut:i|cut:'&amp;&amp;'|cut:'&amp; ' }}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {# Next Page Link #}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&amp;{{ current_query|cut:'page='|cut:page_obj.next_page_number|cut:'&amp;&amp;'|cut:'&amp; ' }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+                {% endwith %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('id_category');
+    const subcategorySelect = document.getElementById('id_subcategory');
+    // Store the initially selected subcategory value (if any) from the server-rendered context
+    const initialSubcategory = subcategorySelect.value;
+
+    function fetchSubcategories(categoryId) {
+        // Clear existing options except the default 'All'
+        subcategorySelect.innerHTML = '<option value="">All Subcategories</option>';
+
+        if (!categoryId) {
+            subcategorySelect.disabled = true; // Disable if no category selected
+            return; // Exit if no category is selected
+        }
+
+        const url = `/api/subcategories/${categoryId}/`; // Use template tag for robustness if needed: {% url 'api_get_subcategories' category_id=0 %}.replace('0', categoryId)
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                subcategorySelect.disabled = false; // Enable the dropdown
+                if (data.length === 0) {
+                     // Maybe add a "No subcategories" option or just leave it with "All"
+                } else {
+                    data.forEach(subcat => {
+                        const option = document.createElement('option');
+                        option.value = subcat.id;
+                        option.textContent = subcat.name;
+                        // Reselect the subcategory if it matches the initial value from context
+                        if (subcat.id.toString() === initialSubcategory) {
+                            option.selected = true;
+                        }
+                        subcategorySelect.appendChild(option);
+                    });
+                }
+                 // If the initialSubcategory was not found in the new list, reset selection to "All"
+                 // This handles cases where the pre-selected subcategory doesn't belong to the newly selected category
+                 if (subcategorySelect.value === "" && initialSubcategory !== "") {
+                     // This condition might need adjustment depending on desired behavior
+                 }
+
+            })
+            .catch(error => {
+                console.error('Error fetching subcategories:', error);
+                subcategorySelect.disabled = true; // Disable on error
+            });
+    }
+
+    // Event listener for category change
+    categorySelect.addEventListener('change', function() {
+        // When category changes manually, we don't need to preserve the old subcategory selection
+        // Reset initialSubcategory conceptually for this manual change
+        // initialSubcategory = ""; // Uncomment if you want selection reset on manual change
+        fetchSubcategories(this.value);
+    });
+
+    // Initial check on page load in case a category is already selected
+    if (categorySelect.value) {
+        fetchSubcategories(categorySelect.value);
+        // Ensure the subcategory dropdown is enabled if a category is pre-selected
+        subcategorySelect.disabled = false;
+    } else {
+        subcategorySelect.disabled = true; // Disable if no category selected initially
+    }
+});
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load listing_filters %}
+
+{% block title %}My Dashboard{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>My Dashboard</h1>
+    <p class="lead">Manage your advertisements here.</p>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <p class="card-text display-4">{{ pending_count }}</p>
+                    <p class="card-text text-muted">Ads waiting for approval</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Approved</h5>
+                    <p class="card-text display-4">{{ approved_count }}</p>
+                    <p class="card-text text-muted">Ads live on the site</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Denied</h5>
+                    <p class="card-text display-4">{{ denied_count }}</p>
+                    <p class="card-text text-muted">Ads that were rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>My Advertisements</h2>
+        <a href="{% url 'ad_create' %}" class="btn btn-primary">Post New Ad</a>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="card">
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-3" id="adTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">All ({{ ads|length }})</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false">Pending ({{ pending_count }})</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab" aria-controls="approved" aria-selected="false">Approved ({{ approved_count }})</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="denied-tab" data-bs-toggle="tab" data-bs-target="#denied" type="button" role="tab" aria-controls="denied" aria-selected="false">Denied ({{ denied_count }})</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="adTabsContent">
+                <!-- All Ads Tab -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                    {% include "listings/user/ad_list_table.html" with ads=ads %}
+                </div>
+                
+                <!-- Pending Ads Tab -->
+                <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                    {% with pending_ads=ads|dictsortreversed:"created_at"|filter_status:"pending" %}
+                        {% if pending_ads %}
+                            {% include "listings/user/ad_list_table.html" with ads=pending_ads %}
+                        {% else %}
+                            <p class="text-center my-4">You don't have any pending ads.</p>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                
+                <!-- Approved Ads Tab -->
+                <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+                    {% with approved_ads=ads|dictsortreversed:"created_at"|filter_status:"approved" %}
+                        {% if approved_ads %}
+                            {% include "listings/user/ad_list_table.html" with ads=approved_ads %}
+                        {% else %}
+                            <p class="text-center my-4">You don't have any approved ads.</p>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                
+                <!-- Denied Ads Tab -->
+                <div class="tab-pane fade" id="denied" role="tabpanel" aria-labelledby="denied-tab">
+                    {% with denied_ads=ads|dictsortreversed:"created_at"|filter_status:"denied" %}
+                        {% if denied_ads %}
+                            {% include "listings/user/ad_list_table.html" with ads=denied_ads %}
+                        {% else %}
+                            <p class="text-center my-4">You don't have any denied ads.</p>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

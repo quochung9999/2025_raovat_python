@@ -1,0 +1,242 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Ad{% else %}Post New Ad{% endif %}
+{% endblock title %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7"> {# Adjusted column width #}
+        <h2>{% if form.instance.pk %}Edit Advertisement{% else %}Post a New Advertisement{% endif %}</h2>
+        <hr>
+        <form method="post" enctype="multipart/form-data"> {# Add enctype for potential image uploads #}
+            {% csrf_token %}
+
+            {# Non-field errors #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Title #}
+            <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                {{ form.title }} {# Assumes form adds form-control class #}
+                {% if form.title.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.title.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {# Description #}
+            <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                {{ form.description }} {# Assumes form adds form-control class #}
+                 {% if form.description.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.description.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+             {# Category #}
+            <div class="mb-3">
+                <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+                {{ form.category }} {# Assumes form adds form-select class #}
+                 {% if form.category.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.category.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+             {# Subcategory #}
+            <div class="mb-3">
+                <label for="{{ form.subcategory.id_for_label }}" class="form-label">{{ form.subcategory.label }}</label>
+                {{ form.subcategory }} {# Assumes form adds form-select class #}
+                 {% if form.subcategory.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.subcategory.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                 <div class="form-text">Select a category first.</div>
+            </div>
+
+            {# Price Type (Radio Buttons) #}
+            <div class="mb-3">
+                 <label class="form-label">{{ form.price_type.label }}</label>
+                 <div id="id_{{ form.price_type.name }}"> {# Wrapper for radio buttons #}
+                    {% for radio in form.price_type %}
+                    <div class="form-check">
+                        <input type="radio" name="{{ radio.data.name }}" id="{{ radio.data.id }}" value="{{ radio.data.value }}"
+                               class="form-check-input {% if form.price_type.errors %}is-invalid{% endif %}"
+                               {% if radio.data.selected %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ radio.data.id }}">
+                            {{ radio.data.label }}
+                        </label>
+                         {% if forloop.last and form.price_type.errors %} {# Show errors after the last radio #}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.price_type.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                 </div>
+            </div>
+
+            {# Price (Conditional) #}
+            <div class="mb-3" id="price-field-wrapper"> {# Wrapper for conditional display #}
+                <label for="{{ form.price.id_for_label }}" class="form-label">{{ form.price.label }}</label>
+                <div class="input-group">
+                     <span class="input-group-text">$</span>
+                     {{ form.price }} {# Assumes form adds form-control class #}
+                </div>
+                 {% if form.price.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.price.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {# Location #}
+            <div class="mb-3">
+                <label for="{{ form.location.id_for_label }}" class="form-label">{{ form.location.label }}</label>
+                {{ form.location }} {# Assumes form adds form-control class #}
+                 {% if form.location.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.location.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <hr>
+            <div class="d-grid"> {# Full width button #}
+                <button type="submit" class="btn btn-primary btn-lg">
+                     <i class="bi {% if form.instance.pk %}bi-check-circle-fill{% else %}bi-send-fill{% endif %} me-1"></i>
+                    {% if form.instance.pk %}Update Ad{% else %}Submit Ad for Approval{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+{# --- Existing Subcategory Script --- #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('id_category');
+    const subcategorySelect = document.getElementById('id_subcategory');
+    // Use a more robust way to get the base URL if possible, but this works for now
+    const subcategoryApiUrlBase = "{% url 'api_get_subcategories' 0 %}".replace('/0/', '/');
+
+    function fetchAndPopulateSubcategories(categoryId) {
+        if (!categoryId) {
+            subcategorySelect.innerHTML = '<option value="">---------</option>'; // Reset
+            subcategorySelect.disabled = true;
+            return;
+        }
+
+        const url = subcategoryApiUrlBase + categoryId + '/';
+        subcategorySelect.disabled = true; // Disable while loading
+        subcategorySelect.innerHTML = '<option value="">Loading...</option>';
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                subcategorySelect.innerHTML = '<option value="">---------</option>'; // Default empty option
+                if (data.length > 0) {
+                    data.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.id;
+                        option.textContent = subcategory.name;
+                        // Check if this subcategory was previously selected (for edit forms)
+                        if (subcategorySelect.dataset.selected === subcategory.id.toString()) {
+                            option.selected = true;
+                        }
+                        subcategorySelect.appendChild(option);
+                    });
+                    subcategorySelect.disabled = false;
+                } else {
+                    subcategorySelect.innerHTML = '<option value="">No subcategories available</option>';
+                    subcategorySelect.disabled = true; // Keep disabled if none found
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching subcategories:', error);
+                subcategorySelect.innerHTML = '<option value="">Error loading</option>';
+                subcategorySelect.disabled = true;
+            });
+    }
+
+    if (categorySelect && subcategorySelect) {
+        // Store the initially selected subcategory value (if any) for edit forms
+        subcategorySelect.dataset.selected = subcategorySelect.value;
+
+        categorySelect.addEventListener('change', function() {
+            const selectedCategoryId = this.value;
+            // Clear the stored selected value when category changes
+            subcategorySelect.dataset.selected = '';
+            fetchAndPopulateSubcategories(selectedCategoryId);
+        });
+
+        // Initial load for edit forms
+        if (categorySelect.value) {
+            fetchAndPopulateSubcategories(categorySelect.value);
+        } else {
+            // Disable subcategory if no category initially selected
+            subcategorySelect.disabled = true;
+        }
+    } else {
+        console.warn('Category or Subcategory select element not found.');
+    }
+
+    // --- New Price Field Logic ---
+    const priceTypeRadios = document.querySelectorAll('input[name="{{ form.price_type.name }}"]');
+    const priceFieldWrapper = document.getElementById('price-field-wrapper');
+    const priceInput = document.getElementById('{{ form.price.id_for_label }}'); // Get the price input itself
+
+    function togglePriceField() {
+        const selectedType = document.querySelector('input[name="{{ form.price_type.name }}"]:checked');
+        if (selectedType && priceFieldWrapper && priceInput) {
+            if (selectedType.value === '{{ form.instance.PRICE_TYPE_FIXED }}' || selectedType.value === '{{ form.instance.PRICE_TYPE_PER_HOUR }}') {
+                priceFieldWrapper.style.display = ''; // Show
+                priceInput.required = true; // Make required
+            } else {
+                priceFieldWrapper.style.display = 'none'; // Hide
+                priceInput.required = false; // Make not required
+                // Optionally clear the value when hiding
+                // priceInput.value = '';
+            }
+        } else if (priceFieldWrapper) {
+             // Default state if no radio selected (shouldn't happen with default)
+             priceFieldWrapper.style.display = '';
+             if(priceInput) priceInput.required = true;
+        }
+    }
+
+    if (priceTypeRadios.length > 0 && priceFieldWrapper) {
+        priceTypeRadios.forEach(radio => {
+            radio.addEventListener('change', togglePriceField);
+        });
+
+        // Initial check on page load
+        togglePriceField();
+    } else {
+         console.warn('Price type radios or price field wrapper not found.');
+    }
+
+});
+</script>
+{% endblock extra_js %}

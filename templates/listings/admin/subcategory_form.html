@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Subcategory{% else %}Create Subcategory{% endif %}
+{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{% if form.instance.pk %}Edit Subcategory{% else %}Create Subcategory{% endif %}</h1>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'ads_management' %}">Ads Management</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'subcategory_list' %}">Subcategories</a></li>
+            <li class="breadcrumb-item active" aria-current="page">
+                {% if form.instance.pk %}Edit{% else %}Create{% endif %}
+            </li>
+        </ol>
+    </nav>
+    <hr> {# Added hr for consistency #}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {# Non-field errors #}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+                    {# Add form-select class for dropdown #}
+                    <select name="{{ form.category.name }}" id="{{ form.category.id_for_label }}"
+                            class="form-select {% if form.category.errors %}is-invalid{% endif %}" required>
+                        {% for value, text in form.category.field.choices %}
+                            <option value="{{ value }}" {% if form.category.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.category.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.category.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Select the parent category for this subcategory.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                    {# Add form-control class #}
+                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}"
+                           class="form-control {% if form.name.errors %}is-invalid{% endif %}"
+                           value="{{ form.name.value|default:'' }}" required>
+                    {% if form.name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                    {# Add form-control class #}
+                     <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}"
+                               class="form-control {% if form.description.errors %}is-invalid{% endif %}"
+                               rows="3">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Optional description for this subcategory.</div>
+                </div>
+
+                <div class="d-flex justify-content-between flex-wrap gap-2"> {# Added flex-wrap and gap #}
+                    <a href="{% url 'subcategory_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                         <i class="bi {% if form.instance.pk %}bi-check-circle-fill{% else %}bi-plus-circle-fill{% endif %} me-1"></i>
+                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Subcategory
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

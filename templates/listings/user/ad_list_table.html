@@ -1,0 +1,34 @@
+{% for ad in ads %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">{{ ad.title }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">
+            {{ ad.category.name }}
+            {% if ad.subcategory %}
+                > {{ ad.subcategory.name }}
+            {% endif %}
+        </h6>
+        <p class="card-text">
+            Status:
+            {% if ad.status == 'pending' %}
+                <span class="badge bg-warning text-dark">Pending</span>
+            {% elif ad.status == 'approved' %}
+                <span class="badge bg-success">Approved</span>
+            {% elif ad.status == 'denied' %}
+                <span class="badge bg-danger">Denied</span>
+            {% endif %}
+            <br>
+            <small class="text-muted">Created: {{ ad.created_at|date:"M d, Y" }}</small>
+        </p>
+        <div class="d-flex justify-content-end">
+             <a href="{% url 'ad_detail' ad.pk %}" class="btn btn-sm btn-outline-primary me-2">View</a>
+             <a href="{% url 'ad_update' ad.pk %}" class="btn btn-sm btn-outline-secondary me-2">Edit</a>
+             <a href="{% url 'ad_delete' ad.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="alert alert-info text-center" role="alert">
+    You haven't posted any ads yet.
+</div>
+{% endfor %}

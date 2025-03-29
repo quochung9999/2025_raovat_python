@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Subcategory{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Delete Subcategory</h1>
+    
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'ads_management' %}">Ads Management</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'subcategory_list' %}">Subcategories</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Delete</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title text-danger">Are you sure you want to delete this subcategory?</h5>
+            <p class="card-text">
+                You are about to delete the subcategory <strong>"{{ object.name }}"</strong> 
+                from category <strong>"{{ object.category.name }}"</strong>.
+                This action cannot be undone.
+            </p>
+            
+            {% if object.ads.exists %}
+                <div class="alert alert-danger">
+                    <strong>Warning:</strong> This subcategory is used by {{ object.ads.count }} advertisements.
+                    Deleting this subcategory will remove it from those ads.
+                </div>
+            {% endif %}
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'subcategory_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
