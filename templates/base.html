@@ -11,6 +11,10 @@
     <!-- Optional: Add custom CSS link here -->
     {% comment %}<link rel="stylesheet" href="{% static 'css/custom.css' %}">{% endcomment %}
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#007bff"> {# Match theme-color in manifest #}
+
     <title>{% block title %}Classified Ads{% endblock title %}</title>
 </head>
 <body>
@@ -77,5 +81,20 @@
     <!-- Optional: Add custom JS link here -->
     {% comment %}<script src="{% static 'js/custom.js' %}"></script>{% endcomment %}
     {% block extra_js %}{% endblock extra_js %} {# Block for page-specific JS #}
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("{% static 'sw.js' %}")
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

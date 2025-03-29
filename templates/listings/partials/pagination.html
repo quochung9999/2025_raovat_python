@@ -9,36 +9,43 @@ in the context.
     <ul class="pagination justify-content-center flex-wrap">
         {% with base_query=current_query|default:request.GET.urlencode %}
         {# Clean base_query to remove existing page parameter #}
-        {% capture cleaned_query %}{% for key, value in request.GET.items %}{% if key != 'page' %}&amp;{{ key }}={{ value }}{% endif %}{% endfor %}{% endcapture %}
+        {% with cleaned_query='' %}
+            {% for key, value in request.GET.items %}
+                {% if key != 'page' %}
+                    {% with cleaned_query=cleaned_query|add:'&amp;'|add:key|add:'='|add:value %}
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
 
-        {# Previous Page Link #}
-        {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ cleaned_query }}">Previous</a>
-            </li>
-        {% else %}
-            <li class="page-item disabled"><span class="page-link">Previous</span></li>
-        {% endif %}
-
-        {# Page Number Links - Basic implementation, could be enhanced with ellipsis for many pages #}
-        {% for i in paginator.page_range %}
-            {% if page_obj.number == i %}
-                <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
-            {% else %}
+            {# Previous Page Link #}
+            {% if page_obj.has_previous %}
                 <li class="page-item">
-                     <a class="page-link" href="?page={{ i }}{{ cleaned_query }}">{{ i }}</a>
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ cleaned_query }}">Previous</a>
                 </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
             {% endif %}
-        {% endfor %}
 
-        {# Next Page Link #}
-        {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ cleaned_query }}">Next</a>
-            </li>
-        {% else %}
-            <li class="page-item disabled"><span class="page-link">Next</span></li>
-        {% endif %}
+            {# Page Number Links - Basic implementation, could be enhanced with ellipsis for many pages #}
+            {% for i in paginator.page_range %}
+                {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item">
+                         <a class="page-link" href="?page={{ i }}{{ cleaned_query }}">{{ i }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {# Next Page Link #}
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ cleaned_query }}">Next</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        {% endwith %}
         {% endwith %}
     </ul>
 </nav>

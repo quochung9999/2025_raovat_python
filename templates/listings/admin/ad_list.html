@@ -129,6 +129,16 @@
                                             {% if ad.status == ad.STATUS_PENDING %}
                                                 <button type="button" class="btn btn-sm btn-success approve-btn" data-ad-id="{{ ad.id }}" title="Approve"><i class="bi bi-check-lg"></i></button>
                                                 <button type="button" class="btn btn-sm btn-danger deny-btn" data-ad-id="{{ ad.id }}" title="Deny"><i class="bi bi-x-lg"></i></button>
+                                                <button type="button" class="btn btn-sm btn-warning flag-deny-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#flagModal"
+                                                        data-ad-id="{{ ad.id }}"
+                                                        data-user-id="{{ ad.author.id }}"
+                                                        data-username="{{ ad.author.username }}"
+                                                        data-ad-title="{{ ad.title }}"
+                                                        title="Flag & Deny">
+                                                    <i class="bi bi-flag-fill"></i>
+                                                </button>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -205,6 +215,16 @@
                          {% if ad.status == ad.STATUS_PENDING %}
                              <button type="button" class="btn btn-sm btn-success approve-btn" data-ad-id="{{ ad.id }}" title="Approve"><i class="bi bi-check-lg"></i> Approve</button>
                              <button type="button" class="btn btn-sm btn-danger deny-btn" data-ad-id="{{ ad.id }}" title="Deny"><i class="bi bi-x-lg"></i> Deny</button>
+                             <button type="button" class="btn btn-sm btn-warning flag-deny-btn mt-2 w-100"
+                                     data-bs-toggle="modal"
+                                     data-bs-target="#flagModal"
+                                     data-ad-id="{{ ad.id }}"
+                                     data-user-id="{{ ad.author.id }}"
+                                     data-username="{{ ad.author.username }}"
+                                     data-ad-title="{{ ad.title }}"
+                                     title="Flag & Deny">
+                                 <i class="bi bi-flag-fill"></i> Flag & Deny
+                             </button>
                          {% endif %}
                     </div>
                 </div>
@@ -254,6 +274,64 @@
         </nav>
     {% endif %}
 
+</div>
+
+<!-- Flag User Modal -->
+<div class="modal fade" id="flagModal" tabindex="-1" aria-labelledby="flagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="flagModalLabel">Flag User as Bad Actor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="flagForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="ad_id" id="flag-ad-id">
+                    <input type="hidden" name="user_id" id="flag-user-id">
+                    <input type="hidden" name="action" value="flag_and_deny">
+                    
+                    <p>You are flagging <strong id="flag-username"></strong> for the ad: <strong id="flag-ad-title"></strong></p>
+                    
+                    <!-- Reason Radio Buttons -->
+                    <div class="mb-3">
+                        <label class="form-label">Reason for flagging</label>
+                        <div id="flag-reasons">
+                            <div class="form-check">
+                                <input type="radio" name="reason" id="reason-spam" value="SPAM" class="form-check-input" required>
+                                <label class="form-check-label" for="reason-spam">Spamming</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" name="reason" id="reason-scam" value="SCAM" class="form-check-input" required>
+                                <label class="form-check-label" for="reason-scam">Scamming / Fraud</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" name="reason" id="reason-hack" value="HACK" class="form-check-input" required>
+                                <label class="form-check-label" for="reason-hack">Hacking / Malicious Activity</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" name="reason" id="reason-other" value="OTHER" class="form-check-input" required>
+                                <label class="form-check-label" for="reason-other">Other (See Details)</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Details Textarea -->
+                    <div class="mb-3">
+                        <label for="flag-details" class="form-label">Details (Required if reason is Other)</label>
+                        <textarea name="details" id="flag-details" class="form-control" rows="3"></textarea>
+                        <div class="invalid-feedback" id="details-error">
+                            Please provide details when selecting "Other".
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="submitFlagBtn">Flag & Deny Ad</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock content %}
@@ -390,6 +468,75 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // --- Flag & Deny Modal Handling ---
+    const flagModal = document.getElementById('flagModal');
+    const flagForm = document.getElementById('flagForm');
+    const submitFlagBtn = document.getElementById('submitFlagBtn');
+    const flagAdId = document.getElementById('flag-ad-id');
+    const flagUserId = document.getElementById('flag-user-id');
+    const flagUsername = document.getElementById('flag-username');
+    const flagAdTitle = document.getElementById('flag-ad-title');
+    const flagDetails = document.getElementById('flag-details');
+    const reasonOther = document.getElementById('reason-other');
+    const detailsError = document.getElementById('details-error');
+
+    // When the modal is shown, populate it with data from the button
+    if (flagModal) {
+        flagModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget; // Button that triggered the modal
+            
+            // Extract info from data attributes
+            const adId = button.getAttribute('data-ad-id');
+            const userId = button.getAttribute('data-user-id');
+            const username = button.getAttribute('data-username');
+            const adTitle = button.getAttribute('data-ad-title');
+            
+            // Update the modal's content
+            flagAdId.value = adId;
+            flagUserId.value = userId;
+            flagUsername.textContent = username;
+            flagAdTitle.textContent = adTitle;
+            
+            // Set the form action to the flag_user URL with the user ID
+            flagForm.action = `/flag-user/${userId}/`;
+            
+            // Reset form
+            flagForm.reset();
+            flagDetails.classList.remove('is-invalid');
+            detailsError.style.display = 'none';
+        });
+    }
+    
+    // Handle form submission
+    if (submitFlagBtn) {
+        submitFlagBtn.addEventListener('click', function() {
+            // Validate form
+            let isValid = true;
+            
+            // Check if any reason is selected
+            const reasonSelected = flagForm.querySelector('input[name="reason"]:checked');
+            if (!reasonSelected) {
+                isValid = false;
+                // Could add validation UI here
+            }
+            
+            // If "Other" is selected, details are required
+            if (reasonOther && reasonOther.checked && !flagDetails.value.trim()) {
+                isValid = false;
+                flagDetails.classList.add('is-invalid');
+                detailsError.style.display = 'block';
+            } else {
+                flagDetails.classList.remove('is-invalid');
+                detailsError.style.display = 'none';
+            }
+            
+            if (isValid) {
+                // Submit the form
+                flagForm.submit();
+            }
+        });
+    }
 
 });
 </script>

@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.http import JsonResponse # Import JsonResponse
 from django.db.models import Q, Exists, OuterRef # Import Q, Exists, OuterRef
 from django.contrib.auth.models import Group # Import Group model
+from datetime import timedelta # Import timedelta for date range queries
 
 # Add near other model imports
 from .models import UserFlag
@@ -521,10 +522,35 @@ class FlagUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
         form.instance.moderator = self.request.user
         form.instance.flagged_user = flagged_user
-        messages.success(self.request, f"User '{flagged_user.username}' has been flagged for review.")
-        # Determine success URL - maybe back to the ad detail? Or user dashboard?
-        # For now, redirect home. Consider redirecting back to the referring page if possible.
-        self.success_url = reverse_lazy('home')
+        
+        # Check if this is a flag_and_deny action
+        action = self.request.POST.get('action')
+        ad_id = self.request.POST.get('ad_id')
+        
+        if action == 'flag_and_deny' and ad_id:
+            try:
+                # Get the ad and verify it belongs to the flagged user
+                ad = Ad.objects.get(pk=ad_id, author=flagged_user)
+                
+                # Only deny if it's pending
+                if ad.status == Ad.STATUS_PENDING:
+                    ad.status = Ad.STATUS_DENIED
+                    ad.save()
+                    messages.success(self.request, f"User '{flagged_user.username}' has been flagged and their ad '{ad.title}' has been denied.")
+                else:
+                    messages.info(self.request, f"User '{flagged_user.username}' has been flagged, but their ad was not in pending status.")
+            except Ad.DoesNotExist:
+                messages.error(self.request, "The specified ad could not be found or does not belong to this user.")
+        else:
+            messages.success(self.request, f"User '{flagged_user.username}' has been flagged for review.")
+        
+        # Determine success URL - redirect back to admin ad list if we came from there
+        if action == 'flag_and_deny':
+            self.success_url = reverse_lazy('admin_ad_list')
+        else:
+            # For regular flagging, redirect home or to referring page
+            self.success_url = reverse_lazy('home')
+            
         return super().form_valid(form)
 
 
@@ -540,10 +566,30 @@ class FlaggedUserListView(SuperuserRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        """Return only pending flags, prefetch related users."""
-        return UserFlag.objects.filter(status=UserFlag.STATUS_PENDING)\
+        """Return only pending flags, prefetch related users and include ad info."""
+        # Get all pending flags
+        flags = UserFlag.objects.filter(status=UserFlag.STATUS_PENDING)\
                .select_related('flagged_user', 'moderator')\
                .order_by('-created_at')
+        
+        # For each flag, try to find the ad that triggered it (if it was a flag_and_deny action)
+        for flag in flags:
+            # Look for an ad that was denied around the same time the flag was created
+            # This is an approximation since we don't store the exact ad that triggered the flag
+            time_threshold = 60  # seconds
+            related_ads = Ad.objects.filter(
+                author=flag.flagged_user,
+                status=Ad.STATUS_DENIED,
+                updated_at__range=(
+                    flag.created_at - timedelta(seconds=time_threshold),
+                    flag.created_at + timedelta(seconds=time_threshold)
+                )
+            ).order_by('-updated_at')
+            
+            # Attach the first related ad (if any) to the flag object
+            flag.related_ad = related_ads.first() if related_ads.exists() else None
+        
+        return flags
 
     def post(self, request, *args, **kwargs):
         """Handle banning users based on selected flags."""

@@ -51,6 +51,9 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="col-12 col-md-auto mt-2 mt-md-0">
+                            <button type="button" id="toggle-all-details" class="btn btn-sm btn-secondary">Collapse All Flags</button>
+                        </div>
                         <div class="col-12 col-md-auto d-none d-md-block">
                              <div class="form-check">
                                  <input type="checkbox" id="select-all-table" class="form-check-input flag-select-all">
@@ -72,6 +75,7 @@
                                     <th>Flagged User</th>
                                     <th>Reason</th>
                                     <th>Details</th>
+                                    <th>Related Ad</th>
                                     <th>Flagged By</th>
                                     <th>Date</th>
                                     <th>Actions</th>
@@ -79,19 +83,60 @@
                             </thead>
                             <tbody>
                                 {% for flag in flags %}
-                                    <tr>
-                                        <td><input type="checkbox" name="selected_flags" value="{{ flag.pk }}" class="form-check-input flag-checkbox"></td>
+                                    {# Main Row - Clickable to toggle details #}
+                                    <tr class="flag-row-main"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#details-{{ flag.pk }}"
+                                        aria-expanded="true"
+                                        aria-controls="details-{{ flag.pk }}"
+                                        style="cursor: pointer;">
+                                        <td onclick="event.stopPropagation();"><input type="checkbox" name="selected_flags" value="{{ flag.pk }}" class="form-check-input flag-checkbox"></td>
                                         <td>{{ flag.flagged_user.username }}</td>
                                         <td>{{ flag.get_reason_display }}</td>
                                         <td>{{ flag.details|default:"N/A"|truncatechars:50 }}</td>
+                                        <td>
+                                            {% if flag.related_ad %}
+                                                <a href="{% url 'ad_detail' flag.related_ad.pk %}" class="text-decoration-none" title="View ad details" onclick="event.stopPropagation();">
+                                                    {{ flag.related_ad.title|truncatechars:30 }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">No related ad</span>
+                                            {% endif %}
+                                        </td>
                                         <td>{{ flag.moderator.username|default:"N/A" }}</td>
                                         <td>{{ flag.created_at|date:"M d, Y P" }}</td>
-                                        <td>
+                                        <td onclick="event.stopPropagation();">
                                             {# Direct ban button for single user #}
                                             <button type="button" class="btn btn-sm btn-danger ban-single-btn" data-flag-id="{{ flag.pk }}" title="Ban {{ flag.flagged_user.username }}"
                                                     onclick="return confirm('Are you sure you want to ban user {{ flag.flagged_user.username }} based on this flag?')">
                                                 <i class="bi bi-slash-circle-fill"></i> Ban User
                                             </button>
+                                        </td>
+                                    </tr>
+                                    {# Details Row - Collapsible #}
+                                    <tr class="flag-row-details collapse show flag-details-collapse" id="details-{{ flag.pk }}">
+                                        <td colspan="8" class="p-3"> {# Span all columns, add padding #}
+                                            {% if flag.related_ad %}
+                                                <div class="card">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Related Ad Details</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <h6 class="text-success">
+                                                            {% if flag.related_ad.price_type == 'fixed' %}Price: ${{ flag.related_ad.price|floatformat:2 }}{% endif %}
+                                                            {% if flag.related_ad.price_type == 'per_hour' %}Rate: ${{ flag.related_ad.price|floatformat:2 }} / hour{% endif %}
+                                                            {% if flag.related_ad.price_type == 'negotiable' %}Price: Negotiable{% endif %}
+                                                            {% if flag.related_ad.price_type == 'free' %}Price: Free{% endif %}
+                                                        </h6>
+                                                        {% if flag.related_ad.location %}<p class="mb-1"><small><strong>Location:</strong> {{ flag.related_ad.location }}</small></p>{% endif %}
+                                                        <p class="mb-0"><small><strong>Description:</strong> {{ flag.related_ad.description|linebreaksbr }}</small></p>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-info mb-0">
+                                                    No related ad found for this flag. The ad may have been deleted or the flag was created manually.
+                                                </div>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -112,16 +157,56 @@
                     <div class="card-body">
                          <div class="d-flex justify-content-between align-items-start mb-2">
                              <div>
-                                 <h5 class="card-title mb-0">User: {{ flag.flagged_user.username }}</h5>
+                                 <h5 class="card-title mb-0"
+                                     data-bs-toggle="collapse"
+                                     data-bs-target="#details-card-{{ flag.pk }}"
+                                     aria-expanded="true"
+                                     aria-controls="details-card-{{ flag.pk }}"
+                                     style="cursor: pointer;">
+                                     User: {{ flag.flagged_user.username }}
+                                 </h5>
                                  <small class="text-muted">By: {{ flag.moderator.username|default:"N/A" }} | {{ flag.created_at|date:"M d, Y" }}</small>
                              </div>
-                             <input type="checkbox" name="selected_flags" value="{{ flag.pk }}" class="form-check-input flag-checkbox ms-2">
+                             <input type="checkbox" name="selected_flags" value="{{ flag.pk }}" class="form-check-input flag-checkbox ms-2" onclick="event.stopPropagation();">
                          </div>
                          <p class="card-text mb-1"><strong>Reason:</strong> {{ flag.get_reason_display }}</p>
                          {% if flag.details %}
                              <p class="card-text mb-2"><small><strong>Details:</strong> {{ flag.details|truncatewords:20 }}</small></p>
                          {% endif %}
-                         <div class="d-flex justify-content-end">
+                         {% if flag.related_ad %}
+                             <p class="card-text mb-2">
+                                 <small><strong>Related Ad:</strong>
+                                     <a href="{% url 'ad_detail' flag.related_ad.pk %}" class="text-decoration-none">
+                                         {{ flag.related_ad.title|truncatechars:30 }}
+                                     </a>
+                                 </small>
+                             </p>
+                         {% endif %}
+                         
+                         {# Collapsible Details Section #}
+                         <div class="collapse show flag-details-collapse" id="details-card-{{ flag.pk }}">
+                             <hr>
+                             {% if flag.related_ad %}
+                                 <div class="card bg-light mb-3">
+                                     <div class="card-body py-2">
+                                         <h6 class="text-success small">
+                                             {% if flag.related_ad.price_type == 'fixed' %}Price: ${{ flag.related_ad.price|floatformat:2 }}{% endif %}
+                                             {% if flag.related_ad.price_type == 'per_hour' %}Rate: ${{ flag.related_ad.price|floatformat:2 }} / hour{% endif %}
+                                             {% if flag.related_ad.price_type == 'negotiable' %}Price: Negotiable{% endif %}
+                                             {% if flag.related_ad.price_type == 'free' %}Price: Free{% endif %}
+                                         </h6>
+                                         {% if flag.related_ad.location %}<p class="mb-1"><small><strong>Location:</strong> {{ flag.related_ad.location }}</small></p>{% endif %}
+                                         <p class="mb-0"><small><strong>Description:</strong> {{ flag.related_ad.description|linebreaksbr }}</small></p>
+                                     </div>
+                                 </div>
+                             {% else %}
+                                 <div class="alert alert-info mb-0">
+                                     No related ad found for this flag.
+                                 </div>
+                             {% endif %}
+                         </div>
+                         
+                         <div class="d-flex justify-content-end mt-2">
                               <button type="button" class="btn btn-sm btn-danger ban-single-btn" data-flag-id="{{ flag.pk }}" title="Ban {{ flag.flagged_user.username }}"
                                       onclick="return confirm('Are you sure you want to ban user {{ flag.flagged_user.username }} based on this flag?')">
                                   <i class="bi bi-slash-circle-fill"></i> Ban User
@@ -200,6 +285,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial check for select-all status
     const allCheckedInitially = Array.from(allCheckboxes).length > 0 && Array.from(allCheckboxes).every(cb => cb.checked);
     selectAllTriggers.forEach(trigger => trigger.checked = allCheckedInitially);
+
+    // --- Toggle All Details ---
+    const toggleAllButton = document.getElementById('toggle-all-details');
+    const allDetailSections = document.querySelectorAll('.flag-details-collapse');
+    // Get Bootstrap Collapse instances for each section
+    const collapseInstances = Array.from(allDetailSections).map(el => new bootstrap.Collapse(el, { toggle: false })); // Initialize without toggling
+
+    if (toggleAllButton) {
+        toggleAllButton.addEventListener('click', function() {
+            // Check if currently any section is collapsed (not shown)
+            const isAnyCollapsed = Array.from(allDetailSections).some(el => !el.classList.contains('show'));
+
+            if (isAnyCollapsed) {
+                // If any are collapsed, expand all
+                collapseInstances.forEach(instance => instance.show());
+                this.textContent = 'Collapse All Flags';
+            } else {
+                // If all are expanded, collapse all
+                collapseInstances.forEach(instance => instance.hide());
+                this.textContent = 'Expand All Flags';
+            }
+        });
+    }
+
+    // Ensure individual toggles update the Toggle All button text
+    allDetailSections.forEach(section => {
+        section.addEventListener('hidden.bs.collapse', () => {
+            // If any section becomes hidden, button should say "Expand All Flags"
+            if (toggleAllButton) toggleAllButton.textContent = 'Expand All Flags';
+        });
+        section.addEventListener('shown.bs.collapse', () => {
+            // If a section is shown, check if ALL are now shown
+            const isAllExpanded = Array.from(allDetailSections).every(el => el.classList.contains('show'));
+            if (isAllExpanded && toggleAllButton) {
+                toggleAllButton.textContent = 'Collapse All Flags';
+            }
+        });
+    });
 });
 </script>
 {% endblock extra_js %}
