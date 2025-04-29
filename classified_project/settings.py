@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-5=#dpl*^6j$s*fk)xyn81kh7d8ew+7ot@9z&0-&df0jh4d6^6_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['hung0604.tplinkdns.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['rauma24h.com', 'www.rauma24h.com', '45.56.68.95', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -123,6 +123,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static'] # Add project-level static directory
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Directory for collected static files
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
