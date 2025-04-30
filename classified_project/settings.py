@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     # Local apps
     'listings.apps.ListingsConfig',
+    'psycopg2', # Added for PostgreSQL
 ]
 
 MIDDLEWARE = [
@@ -77,10 +78,17 @@ WSGI_APPLICATION = 'classified_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# Updated for PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'raovat_db',
+        'USER': 'raovat_user',
+        'PASSWORD': 'your_secure_password',  # Use a strong password
+        'HOST': 'localhost',
+        'PORT': '',  # Leave empty to use default port (5432)
     }
 }
 
