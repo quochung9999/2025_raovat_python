@@ -1,4 +1,4 @@
-#!/home/aaa/Desktop/python_version/venv/bin/python3
+#!/var/www/2025_raovat_python/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

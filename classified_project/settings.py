@@ -86,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'raovat_db',
         'USER': 'raovat_user',
-        'PASSWORD': 'your_secure_password',  # Use a strong password
+        'PASSWORD': 'cn2025_Hung@@',  # Use the password you set
         'HOST': 'localhost',
         'PORT': '',  # Leave empty to use default port (5432)
     }
