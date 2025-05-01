@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return; // Exit if no category is selected
         }
 
-        const url = `/api/subcategories/${categoryId}/`; // Use template tag for robustness if needed: {% url 'api_get_subcategories' category_id=0 %}.replace('0', categoryId)
+        const url = `/subcategories-by-category/${categoryId}/`; // Updated to use the new endpoint path
 
         fetch(url)
             .then(response => {

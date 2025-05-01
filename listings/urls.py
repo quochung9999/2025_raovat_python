@@ -47,6 +47,7 @@ urlpatterns = [
     path('manage/subcategories/<int:pk>/edit/', SubCategoryUpdateView.as_view(), name='subcategory_update'),
     path('manage/subcategories/<int:pk>/delete/', SubCategoryDeleteView.as_view(), name='subcategory_delete'),
     
-    # API URLs
-    path('api/subcategories/<int:category_id>/', views.get_subcategories, name='api_get_subcategories'),
+    # Custom API endpoint for getting subcategories by category ID
+    # This is separate from the REST framework API endpoints
+    path('subcategories-by-category/<int:category_id>/', views.get_subcategories, name='api_get_subcategories'),
 ]

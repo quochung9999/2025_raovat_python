@@ -73,6 +73,22 @@ class AdForm(forms.ModelForm):
 
         return cleaned_data
 
+    def clean_subcategory(self):
+        category = self.cleaned_data.get('category')
+        subcategory = self.cleaned_data.get('subcategory')
+
+        if category and not subcategory:
+            # If a category is selected but no subcategory is provided,
+            # it's likely the "All Subcategories" option or the category has no subcategories.
+            # Allow this case.
+            return None # Return None for an empty subcategory
+
+        # If a subcategory is provided, ensure it belongs to the selected category (optional but good practice)
+        if category and subcategory and subcategory.category != category:
+             raise forms.ValidationError("The selected subcategory does not belong to the chosen category.")
+
+        return subcategory
+
 class CategoryForm(forms.ModelForm):
     """Form for creating and updating categories."""
     class Meta:

@@ -5,6 +5,7 @@ from rest_framework import status
 
 from .models import Ad, Category, SubCategory
 from .serializers import AdSerializer, CategorySerializer, SubCategorySerializer
+from .api_permissions import IsAuthorOrAdminOrModerator
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """

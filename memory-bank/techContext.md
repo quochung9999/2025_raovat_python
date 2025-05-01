@@ -24,3 +24,48 @@ For the machine identified as `aaa@aaa-Virtual-Machine`, the PostgreSQL credenti
 - **Password:** `temp_password`
 
 Note: The specific authentication method configured on this machine is not currently documented. You may need to use password authentication when connecting with these credentials.
+
+## Web Server Configuration
+
+The web application is deployed using a standard Django + Gunicorn + Nginx stack:
+
+### Nginx
+
+- **Version:** 1.18.0 (Ubuntu)
+- **Configuration File:** `/etc/nginx/sites-available/raovat`
+- **Enabled Site:** `/etc/nginx/sites-enabled/raovat` (symlink)
+- **SSL Certificates:** Managed by Certbot at `/etc/letsencrypt/live/rauma24h.com/`
+- **Domain Names:** `rauma24h.com`, `www.rauma24h.com`
+- **IP Address:** `45.56.68.95`
+
+### Gunicorn
+
+- **Service File:** `/etc/systemd/system/gunicorn_raovat.service`
+- **Workers:** 3
+- **Binding:** Unix socket at `/var/www/2025_raovat_python/gunicorn.sock`
+- **WSGI Application:** `classified_project.wsgi:application`
+
+## Django Application
+
+- **Version:** 5.1.7
+- **Installation Path:** `/var/www/2025_raovat_python`
+- **Virtual Environment:** `/var/www/2025_raovat_python/venv`
+- **Main App:** `classified_project`
+- **Main App Module:** `listings`
+
+## API Framework
+
+- **Framework:** Django REST Framework
+- **Version:** 3.16.0
+- **API URL Prefix:** `/api/`
+- **ViewSets:**
+  - `AdViewSet`: Manages ad resources
+  - `CategoryViewSet`: Manages category resources
+  - `SubCategoryViewSet`: Manages subcategory resources
+- **Custom Permissions:**
+  - `IsAuthorOrAdminOrModerator`: Allows authors, admins, and moderators to edit resources
+
+## Database
+
+- **Type:** PostgreSQL
+- **Adapter:** psycopg2-binary
