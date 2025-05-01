@@ -91,7 +91,3 @@ To ensure the correct credentials and configurations are used, it is crucial to 
     Check for the existence of files or directories that are specific to the live or local development environment. For example, you might check for the existence of a file containing the database credentials for the live environment.
 
 Based on the environment detected, choose the appropriate credentials and configurations.
-
-**GitHub Credentials**
-
-Remember that my GitHub key is `<GITHUB_TOKEN>` and my username is `quochung9999` to do all tasks related to GitHub repo.
