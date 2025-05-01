@@ -38,6 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party apps
+    'rest_framework',
+
     # Local apps
     'listings.apps.ListingsConfig',
     'psycopg2', # Added for PostgreSQL
