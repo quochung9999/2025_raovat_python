@@ -63,9 +63,3 @@ class AdViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """Set status back to pending when an ad is updated."""
         serializer.save(status=Ad.STATUS_PENDING)
-
-    # You might want to add custom logic for permissions on update/delete
-    # For example, only the author or an admin/moderator can update/delete an ad.
-    # This can be done using DRF's Permission classes or by overriding methods.
-    # For simplicity, using IsAuthenticatedOrReadOnly for now means any authenticated user can edit/delete any ad, which is NOT desired.
-    # We will need to add a custom permission class later.
