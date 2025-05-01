@@ -69,3 +69,29 @@ The web application is deployed using a standard Django + Gunicorn + Nginx stack
 
 - **Type:** PostgreSQL
 - **Adapter:** psycopg2-binary
+
+## Environment Detection and Credential Selection
+
+To ensure the correct credentials and configurations are used, it is crucial to determine whether the environment is a live PC or a local development PC. This can be achieved by running the following Linux commands:
+
+1.  **Check the hostname:**
+
+    `hostname`
+
+    This command will return the hostname of the machine. On a live PC, the hostname is likely to be a domain name or a server name. On a local development PC, the hostname is likely to be a more generic name.
+
+2.  **Check the IP address:**
+
+    `ip addr show`
+
+    This command will return the IP addresses of the machine. On a live PC, the IP address is likely to be a public IP address. On a local development PC, the IP address is likely to be a private IP address (e.g., 192.168.x.x, 10.x.x.x).
+
+3.  **Check for specific files or directories:**
+
+    Check for the existence of files or directories that are specific to the live or local development environment. For example, you might check for the existence of a file containing the database credentials for the live environment.
+
+Based on the environment detected, choose the appropriate credentials and configurations.
+
+**GitHub Credentials**
+
+Remember that my GitHub key is `<GITHUB_TOKEN>` and my username is `quochung9999` to do all tasks related to GitHub repo.

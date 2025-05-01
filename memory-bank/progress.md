@@ -18,6 +18,9 @@ Confirmed that the default PostgreSQL login using peer authentication for the `p
 
 ## Server Configuration
 
+- Environment detection is a priority before performing any tasks involving database or server configuration.
+
+
 - Documented the web application server configuration in `how_webapp_server_configed.md`
 - Server is configured with Nginx as a reverse proxy to Gunicorn
 - Gunicorn is configured as a systemd service to run the Django application
