@@ -1,0 +1,94 @@
+# Project Logic and Features Summary
+
+## Project Overview:
+This project is a web application for managing classified advertisements, built using the Django web framework and Django REST Framework for its API. It allows users to create, view, and manage ads, while providing administrative tools for content moderation, user management, and category/subcategory organization.
+
+## Core Features & Logic:
+
+### Role-Based Features:
+
+#### 1. General Users (Unauthenticated):
+*   **View Ads**: Can view all approved classified advertisements on the homepage.
+*   **Search/Filter Ads**: Can search and filter approved ads by keywords, categories, and subcategories.
+*   **View Ad Details**: Can view the full details of any approved ad.
+*   **API Access (Read-Only)**: Can access read-only API endpoints for categories and subcategories. Can also view approved ads via the API.
+
+#### 2. Authenticated Users (Standard Users):
+*   **All General User Capabilities**: Inherits all capabilities of unauthenticated users.
+*   **User Registration**: Can sign up for a new account.
+*   **Login/Logout**: Can log in and out of their account.
+*   **Create Ads**: Can create new classified advertisements. Newly created ads are automatically set to 'pending' status.
+*   **User Dashboard**: Access a personal dashboard to view all their own ads, regardless of status (pending, approved, denied).
+*   **Edit Own Ads**: Can update their own existing ads. Editing an ad automatically resets its status to 'pending' for re-approval by an admin/moderator.
+*   **Delete Own Ads**: Can delete their own ads after confirmation.
+*   **API Access (Authenticated)**: Can create, retrieve, update, and delete their own ads via the API. Can also filter ads by their own author ID.
+
+#### 3. Moderators:
+*   **All Authenticated User Capabilities**: Inherits all capabilities of standard authenticated users.
+*   **Ad Review**: Can access the admin interface to view and manage all ads (including pending, approved, and denied).
+*   **Bulk Ad Actions**: Can perform bulk actions on ads (e.g., approve selected, deny selected, approve all pending, deny all pending).
+*   **Flag Users**: Can flag other users for various reasons (e.g., spamming, scamming, malicious activity).
+*   **Flag and Deny Ad**: When flagging a user, can optionally deny an ad belonging to that user if it is in 'pending' status.
+*   **API Access (Moderator)**: Can modify any ad via the API.
+
+#### 4. Superusers (Admins):
+*   **All Moderator Capabilities**: Inherits all capabilities of moderators.
+*   **Full Admin Interface Access**: Has full access to the Django Admin site for comprehensive management.
+*   **Category Management**: Can create, read, update, and delete categories through dedicated admin views.
+*   **Subcategory Management**: Can create, read, update, and delete subcategories through dedicated admin views.
+*   **User Management**: Can manage all user accounts, including:
+    *   Banning/unbanning users (deactivating/activating accounts).
+    *   Assigning/removing 'Moderator' roles to users.
+    *   Cannot modify their own superuser account or other superuser accounts through this interface.
+*   **Flagged User Review**: Can review all pending user flags and take action, such as banning the flagged user.
+*   **API Access (Admin)**: Has full administrative control over all API resources, including the ability to modify any ad.
+
+### 1. Ad Management:
+*   Users can create new ads, which are initially set to 'pending' status.
+*   Ads can have a title, description, price (fixed, per hour, negotiable, or free), location, category, and subcategory.
+*   Users can view, update, and delete their own ads from a personal dashboard. Updating an ad resets its status to 'pending' for re-approval.
+*   General users can only view 'approved' ads.
+*   Admins/Moderators have a dedicated interface to review, approve, or deny ads, including bulk actions.
+
+### 2. Category and Subcategory System:
+*   Ads are organized into hierarchical categories and subcategories.
+*   Categories and subcategories have names, slugs (for clean URLs), and descriptions.
+*   Superusers can manage (create, read, update, delete) categories and subcategories through dedicated admin interfaces.
+*   Dynamic subcategory selection is supported in ad creation forms via an AJAX endpoint.
+
+### 3. User Management & Authentication:
+*   Users can sign up for accounts. The signup process uses a custom form that simplifies password validation for development/testing purposes.
+*   Users can log in and access a personal dashboard.
+*   Superusers have a comprehensive user management interface to:
+    *   Ban/unban users (deactivate/activate accounts).
+    *   Assign/remove 'Moderator' roles (by adding/removing users from a 'Moderators' group).
+    *   Prevents superusers from modifying their own accounts or other superusers.
+
+### 4. Moderation & User Flagging:
+*   Moderators (users in the 'Moderators' group) can flag other users for various reasons (spam, scam, hacking, other).
+*   When flagging, moderators can optionally deny an ad belonging to the flagged user if it's in pending status.
+*   Superusers can review pending user flags and take action, such as banning the flagged user. The system attempts to link flags to related denied ads for context.
+
+### 5. API (Django REST Framework):
+*   Provides RESTful endpoints for programmatic interaction with the data.
+*   **/api/ads/**: Full CRUD operations for ads.
+    *   Only approved ads are visible to unauthenticated users.
+    *   Authenticated users can filter by author or status.
+    *   Ad creation automatically assigns the author and sets status to 'pending'.
+    *   Ad updates reset status to 'pending'.
+    *   Access controlled by `IsAuthorOrAdminOrModerator` custom permission.
+*   **/api/categories/**: Read-only access to categories.
+*   **/api/subcategories/**: Read-only access to subcategories.
+*   **Custom Permission (`IsAuthorOrAdminOrModerator`)**: Ensures that only the ad's author, superusers, or moderators can modify an ad via the API. Read access is open to all.
+
+### 6. Admin Interface Customization:
+*   The Django Admin site is customized for easier management of Categories, SubCategories, Ads, and UserFlags.
+*   Provides custom list displays, filters, search fields, and editable fields (e.g., ad status, flag status).
+*   The default User admin is replaced with a custom one for better display and filtering.
+
+### 7. Technical Stack & Configuration (from `techContext.md`):
+*   **Backend**: Django (5.1.7), Django REST Framework (3.16.0).
+*   **Database**: PostgreSQL (with `psycopg2-binary` adapter).
+*   **Web Server**: Nginx (1.18.0) and Gunicorn (with 3 workers, binding to a Unix socket).
+*   **Deployment**: Configured for a standard Django + Gunicorn + Nginx stack, including SSL certificates managed by Certbot.
+*   **Environment Detection**: Includes notes on how to detect live vs. local development environments for credential selection.
